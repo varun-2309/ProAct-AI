@@ -1,0 +1,3 @@
+“Data-Centric Machine Learning: Improving Model Performance by Identifying Harmful Training Samples”
+
+This project finds bad or harmful data in a dataset and shows that removing it improves a machine-learning model’s performance.
