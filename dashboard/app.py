@@ -3,7 +3,12 @@ import requests
 import time
 
 # =====================================================
-# Page Config
+# BACKEND URL (LIVE ON RENDER)
+# =====================================================
+BACKEND_URL = "https://proact-ai-backend.onrender.com"
+
+# =====================================================
+# PAGE CONFIG
 # =====================================================
 st.set_page_config(
     page_title="ProAct-AI",
@@ -12,7 +17,7 @@ st.set_page_config(
 )
 
 # =====================================================
-# Custom Dark Theme Styling
+# DARK THEME STYLES
 # =====================================================
 st.markdown("""
 <style>
@@ -27,7 +32,7 @@ body {
     background-color: #111827;
     padding: 1.5rem;
     border-radius: 14px;
-    box-shadow: 0 0 30px rgba(59,130,246,0.08);
+    box-shadow: 0 0 30px rgba(59,130,246,0.12);
 }
 .badge {
     display: inline-block;
@@ -43,7 +48,7 @@ body {
     color: #fecaca;
     padding: 1rem;
     border-radius: 12px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
 }
 .low {
@@ -51,18 +56,17 @@ body {
     color: #bbf7d0;
     padding: 1rem;
     border-radius: 12px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
 }
 .subtitle {
     color: #9CA3AF;
-    font-size: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# Hero Section
+# HERO
 # =====================================================
 st.markdown("## 🧠 ProAct-AI")
 st.markdown("### Predict failures before they happen")
@@ -74,12 +78,12 @@ st.markdown("<span class='badge'>🟢 Live AI System</span>", unsafe_allow_html=
 st.markdown("---")
 
 # =====================================================
-# Layout
+# LAYOUT
 # =====================================================
-left, right = st.columns([1, 1.1], gap="large")
+left, right = st.columns([1, 1.2], gap="large")
 
 # =====================================================
-# LEFT: INPUT PANEL
+# INPUT PANEL
 # =====================================================
 with left:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -101,7 +105,7 @@ with left:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =====================================================
-# RIGHT: RESULTS PANEL
+# RESULTS PANEL
 # =====================================================
 with right:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -109,23 +113,24 @@ with right:
 
     if predict:
         with st.spinner("Running AI inference..."):
-            time.sleep(1.2)
+            time.sleep(1)
 
             try:
                 failure_res = requests.post(
-                    "http://127.0.0.1:8000/predict/failure",
-                    json=payload
+                    f"{BACKEND_URL}/predict/failure",
+                    json=payload,
+                    timeout=10
                 ).json()
 
                 rul_res = requests.post(
-                    "http://127.0.0.1:8000/predict/rul",
-                    json=payload
+                    f"{BACKEND_URL}/predict/rul",
+                    json=payload,
+                    timeout=10
                 ).json()
 
                 risk = failure_res["failure_risk"]
-                rul = rul_res["estimated_RUL"]
+                rul = float(rul_res["estimated_RUL"])
 
-                # Failure Risk
                 if risk == "HIGH":
                     st.markdown(
                         "<div class='high'>🔴 HIGH FAILURE RISK<br>Immediate maintenance recommended</div>",
@@ -137,20 +142,16 @@ with right:
                         unsafe_allow_html=True
                     )
 
-                st.markdown("")
+                st.markdown("#### ⏳ Remaining Useful Life")
+                st.markdown(f"**{rul:.2f} cycles**")
 
-                # RUL
-                st.markdown(f"#### ⏳ Remaining Useful Life")
-                st.markdown(f"**{rul} cycles**")
-
-                # Health Bar
-                health = max(0, min(100, int((rul / 100) * 100)))
+                health = max(0, min(100, int(rul)))
                 st.progress(health)
 
-                st.caption("Prediction based on live sensor data")
+                st.caption("Prediction powered by ProAct-AI backend")
 
-            except Exception:
-                st.error("Backend API not reachable. Please ensure FastAPI is running.")
+            except Exception as e:
+                st.error("❌ Backend not reachable. Check Render service.")
 
     else:
         st.markdown(
